@@ -96,8 +96,8 @@ namespace ReactNet.Repository
                 personDetails.Family.Add(new Family
                 {
                     Id = spouseDb,
-                    Label = _peopleDb[spouseDb].PreferredName,
-                    Type = FamilyType.Spouse
+                    Name = _peopleDb[spouseDb].PreferredName,
+                    Relationship = "Spouse"
                 });
             }
 
@@ -106,8 +106,8 @@ namespace ReactNet.Repository
                 personDetails.Family.Add(new Family
                 {
                     Id = parentDb,
-                    Label = _peopleDb[parentDb].PreferredName,
-                    Type = FamilyType.Parent
+                    Name = _peopleDb[parentDb].PreferredName,
+                    Relationship = "Parent"
                 });
             }
 
@@ -116,8 +116,8 @@ namespace ReactNet.Repository
                 personDetails.Family.Add(new Family
                 {
                     Id = childDb,
-                    Label = _peopleDb[childDb].PreferredName,
-                    Type = FamilyType.Child
+                    Name = _peopleDb[childDb].PreferredName,
+                    Relationship = "Child"
                 });
             }
 
@@ -126,8 +126,8 @@ namespace ReactNet.Repository
                 personDetails.Family.Add(new Family
                 {
                     Id = siblingDb,
-                    Label = _peopleDb[siblingDb].PreferredName,
-                    Type = FamilyType.Sibling
+                    Name = _peopleDb[siblingDb].PreferredName,
+                    Relationship = "Sibling"
                 });
             }
 

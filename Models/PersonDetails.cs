@@ -12,9 +12,11 @@ namespace ReactNet.Models
     }
     public class Family
     {
-        public FamilyType Type { get; set; }
         public string Id { get; set; }
-        public string Label { get; set; }
+        
+        public string Name { get; set; }
+        public string Relationship { get; set; }
+
     }
 
     public class PersonNote

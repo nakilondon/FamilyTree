@@ -11,25 +11,6 @@ export default class PersonTable extends Component {
         this.props.selectedPerson(id);
       }
     
-    relationShip(type){
-        if (type == 0){
-          return "Spouse";
-        }
-    
-        if (type == 1){
-          return "Parent";
-        };
-    
-        if (type == 2){
-          return "Child";
-        };
-    
-        if (type == 3){
-          return "Sbling";
-        };
-    }
-      
-    
     buildFamilyTable(Family) {
         if (Family == null)
         {
@@ -38,11 +19,10 @@ export default class PersonTable extends Component {
     
         return (
           Family
-            .sort((a,b) => a.type - b.type)
             .map(member =>
                 <tr key={member.id} value={member.id} onClick={() => this.onPersonChange(member.id)}>
-                  <td>{this.relationShip(member.type)}</td>
-                  <td >{member.label}</td>
+                  <td>{member.relationship}</td>
+                  <td >{member.name}</td>
                 </tr>)
         );
     }

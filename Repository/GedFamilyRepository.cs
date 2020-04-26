@@ -201,49 +201,20 @@ namespace ReactNet.Repository
 
             var familyDetails = new List<Family>();
 
-            foreach (var family in gedPerson.ChildIn)
-            {
-                var parentsDb = GedcomDb
-                    .Individuals.FindAll((i => i.SpouseIn != null && i.SpouseInFamily(family.Family)));
-                
-                foreach (var parentDb in parentsDb)
-                {
-                    if (!parentDb.Equals(gedPerson))
-                    {
-                        familyDetails.Add(new Family
-                        {
-                            Type = FamilyType.Parent,
-                            Id = parentDb.XRefID,
-                            Label = NameFromGed(parentDb.GetName())
-                        });
-                    }
-                }
-
-                var siblings = GedcomDb
-                    .Individuals.FindAll(i => i.ChildIn != null && i.ChildInFamily(family.Family));
-                foreach (var sibling in siblings)
-                {
-                    if (!sibling.Equals(gedPerson))
-                    {
-                        familyDetails.Add(new Family
-                        {
-                            Type = FamilyType.Sibling,
-                            Id = sibling.XRefID,
-                            Label = NameFromGed(sibling.GetName())
-                        });
-                    }
-                }
-            }
 
             var familyRecords =
                 GedcomDb.Families.FindAll(f => f.Husband == gedPerson.XRefID || f.Wife == gedPerson.XRefID);
+
             foreach (var familyRecord in familyRecords)
             {
-             
+
                 string spouseId = null;
+                string relationship = null;
+
                 var wife = familyRecord.Wife;
                 if (wife != null && wife != gedPerson.XRefID)
                 {
+                    relationship = "Wife";
                     spouseId = wife;
                 }
                 else
@@ -251,6 +222,7 @@ namespace ReactNet.Repository
                     var husband = familyRecord.Husband;
                     if (husband != null && husband != gedPerson.XRefID)
                     {
+                        relationship = "Husband";
                         spouseId = husband;
                     }
                 }
@@ -259,9 +231,9 @@ namespace ReactNet.Repository
                 {
                     familyDetails.Add(new Family
                     {
-                        Type = FamilyType.Spouse,
+                        Relationship = relationship ?? "Spouse",
                         Id = spouseId,
-                        Label = NameFromGed(GedcomDb.Individuals.Find(i => i.XRefID == spouseId)?.GetName())
+                        Name = NameFromGed(GedcomDb.Individuals.Find(i => i.XRefID == spouseId)?.GetName())
                     });
                 }
 
@@ -269,10 +241,67 @@ namespace ReactNet.Repository
                 {
                     familyDetails.Add(new Family
                     {
-                        Type = FamilyType.Child,
+                        Relationship = GedcomDb.Individuals.Find(i => i.XRefID == child)?.Sex switch
+                        {
+                            GedcomSex.Female => "Daughter",
+                            GedcomSex.Male => "Son",
+                            _ => "Child"
+                        },
                         Id = child,
-                        Label = NameFromGed(GedcomDb.Individuals.Find(i => i.XRefID == child)?.GetName())
+                        Name = NameFromGed(GedcomDb.Individuals.Find(i => i.XRefID == child)?.GetName())
                     });
+                }
+            }
+
+            foreach (var family in gedPerson.ChildIn)
+            {
+                var parentsDb = GedcomDb
+                    .Individuals.FindAll((i => i.SpouseIn != null && i.SpouseInFamily(family.Family)));
+
+                foreach (var parentDb in parentsDb)
+                {
+                    if (!parentDb.Equals(gedPerson))
+                    {
+                        familyDetails.Add(new Family
+                        {
+                            Relationship = parentDb.Sex switch
+                            {
+                                GedcomSex.Female => "Mother",
+                                GedcomSex.Male => "Father",
+                                _ => "Parent"
+                            },
+                            Id = parentDb.XRefID,
+                            Name = NameFromGed(parentDb.GetName())
+                        });
+                    }
+                }
+            }
+            
+            var siblingsFamilyRecords =
+                GedcomDb.Families.FindAll(f => familyDetails.Find(
+                    fd => fd.Relationship == "Father" && fd.Id == f.Husband || fd.Relationship == "Mother" && fd.Id == f.Wife) != null);
+
+            foreach (var siblingsFamily in siblingsFamilyRecords)
+            {
+                var siblings = GedcomDb.Individuals.FindAll(i => siblingsFamily.Children.Contains(i.XRefID))
+                    .OrderBy(i => i.Birth?.Date);
+
+                foreach (var sibling in siblings)
+                {
+                    if (!sibling.Equals(gedPerson))
+                    {
+                        familyDetails.Add(new Family
+                        {
+                            Relationship = sibling.Sex switch
+                            {
+                                GedcomSex.Female => "Sister",
+                                GedcomSex.Male => "Brother",
+                                _ => "Sibling"
+                            },
+                            Id = sibling.XRefID,
+                            Name = NameFromGed(sibling.GetName())
+                        });
+                    }
                 }
             }
 
@@ -280,17 +309,20 @@ namespace ReactNet.Repository
 
             foreach (var gedEvent in gedPerson.Events.OrderBy(e => e.Date))
             {
-                eventList.Add(new PersonEvent
+                if (gedEvent.Date != null)
                 {
-                    EventDate = gedEvent?.Date?.DateString,
-                    Place = gedEvent?.Place?.Name,
-                    Detail = gedEvent?.EventType switch
+                    eventList.Add(new PersonEvent
                     {
-                        GedcomEventType.Birth => "Birth",
-                        GedcomEventType.DEAT => "Death",
-                        _ => gedEvent?.Classification ?? gedEvent?.EventName
-                    }
-                });
+                        EventDate = gedEvent.Date?.DateString,
+                        Place = gedEvent.Place?.Name,
+                        Detail = gedEvent.EventType switch
+                        {
+                            GedcomEventType.Birth => "Birth",
+                            GedcomEventType.DEAT => "Death",
+                            _ => gedEvent.Classification ?? gedEvent.EventName
+                        }
+                    });
+                }
             }
 
             var personDetails = new PersonDetails
