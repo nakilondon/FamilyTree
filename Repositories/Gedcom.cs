@@ -5,7 +5,7 @@ using GeneGenie.Gedcom;
 using GeneGenie.Gedcom.Enums;
 using GeneGenie.Gedcom.Parser;
 
-namespace ReactNet.Repository
+namespace ReactNet.Repositories
 {
     public class Gedcom : IGedcom
     {

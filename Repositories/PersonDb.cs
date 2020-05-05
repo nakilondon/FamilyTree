@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ReactNet.Repository
+namespace ReactNet.Repositories
 {
     public enum Gender
     {
@@ -23,6 +23,7 @@ namespace ReactNet.Repository
     }
     public class PersonEvent
     {
+        public string Id { get; set; }
         public EventType Type { get; set; }
         public string EventDate { get; set; }
         public string Place { get; set; }

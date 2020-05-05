@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace ReactNet.Repository
+namespace ReactNet.Repositories
 {
     public interface IGedcom
     {

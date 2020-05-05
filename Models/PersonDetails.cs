@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using ReactNet.Repository;
+using ReactNet.Repositories;
 
 namespace ReactNet.Models
 {
@@ -13,7 +13,6 @@ namespace ReactNet.Models
     public class Family
     {
         public string Id { get; set; }
-        
         public string Name { get; set; }
         public string Relationship { get; set; }
 
@@ -26,7 +25,13 @@ namespace ReactNet.Models
 
     public class PersonDetails
     {
-        public string Title { get; set; }
+        public string Id { get; set; }
+        public string PreferredName { get; set; }
+        public string FullName { get; set; }
+        public string Birth { get; set; }
+        public string Death { get; set; }
+        public string Portrait { get; set; }
+        public string Note { get; set; }
         public List<Family> Family { get; set; }
         public List<PersonEvent> Events { get; set; }
     }

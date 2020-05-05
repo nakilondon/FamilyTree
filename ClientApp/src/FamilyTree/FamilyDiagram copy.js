@@ -1,52 +1,13 @@
-import React, { Component, createRef } from 'react';
+import React, { Component } from 'react';
 import { FamDiagram } from 'basicprimitivesreact';
 import primitives from 'basicprimitives';
-import ResizeObserver from "resize-observer-polyfill";
-
 import './FamilyTree.css'
 
 export default class FamilyTreeDiagram extends Component {
-    resizeObserver = null;
-    resizeSubject = createRef();
-    state = {};
-
     constructor(props) {
         super(props);
         this.onCursorChanged = this.onCursorChanged.bind(this);
     };
-
-    componentDidMount() {
-        if ("ResizeObserver" in window) {
-            this.observe(ResizeObserver);
-        } else {
-            import("resize-observer-polyfill").then(this.observe);
-        }
-    }
-
-    componentWillUnmount() {
-        if (this.resizeObserver) {
-          this.resizeObserver.disconnect();
-        }
-      }
-    
-      observe = RO => {
-        this.resizeObserver = new RO(entries => {
-          const {
-            width,
-            height,
-            top,
-            right,
-            bottom,
-            left
-          } = entries[0].contentRect;
-          this.setState({ width, height, top, right, bottom, left });
-        });
-    
-        if (this.resizeSubject.current) {
-          this.resizeObserver.observe(this.resizeSubject.current);
-        }
-      };
-    
 
     onCursorChanged(event, data) {
         const { context: item } = data;
@@ -58,8 +19,8 @@ export default class FamilyTreeDiagram extends Component {
     renderDiagram(items, CursorChange, id) {
         let config = {
             cursorItem: id,
-            
-            
+            pageFitMode: primitives.common.PageFitMode.AutoSize,
+            autoSizeMinimum: { width: 100, height: 100 },
             neighboursSelectionMode: primitives.common.NeighboursSelectionMode.ParentsChildrenSiblingsAndSpouses,
             hasSelectorCheckbox: primitives.common.Enabled.False,
             normalLevelShift: 20,
@@ -71,7 +32,7 @@ export default class FamilyTreeDiagram extends Component {
             items: items
           };
 
-        return <div ref={this.resizeSubject} className="FamilyTree" >
+        return <div className="FamilyTree">
             <FamDiagram centerOnCursor={true} onCursorChanged={CursorChange} config={config} />
         </div>
     }

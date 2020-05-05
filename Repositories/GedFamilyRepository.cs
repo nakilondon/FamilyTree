@@ -1,24 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using AutoMapper;
 using GeneGenie.Gedcom;
 using GeneGenie.Gedcom.Enums;
 using GeneGenie.Gedcom.Parser;
+using Microsoft.Extensions.Configuration;
 using ReactNet.Models;
 
-namespace ReactNet.Repository
+namespace ReactNet.Repositories
 {
     public class GedFamilyRepository : IFamilyRepository
     {
-        private readonly string _gedcomFile;
+        private readonly IConfiguration _configuration;
+        private readonly IPersonOverride _personOverrideDb;
+        private readonly IMapper _mapper;
 
-        public GedFamilyRepository(string gedcomFile)
+        public GedFamilyRepository(IConfiguration configuration, IPersonOverride personOverrideDb, IMapper mapper)
         {
-            _gedcomFile = gedcomFile;
+            _configuration = configuration;
+            _personOverrideDb = personOverrideDb;
+            _mapper = mapper;
         }
 
-        private string NameFromGed(GedcomName gedcomName)
+        public async Task<string> NameFromGed(string id, GedcomName gedcomName)
         {
+
+            try
+            {
+                var overridePerson = await _personOverrideDb.GetPerson(id);
+                if (overridePerson?.PreferredName != null)
+                    return overridePerson.PreferredName;
+            }
+            catch (Exception e)
+            {
+            }
+
             string name;
 
             var position = gedcomName.Given.IndexOf(' ');
@@ -32,7 +50,9 @@ namespace ReactNet.Repository
             }
 
             return name;
+          
         }
+    
 
         private GedcomDatabase _gedcomDb;
         
@@ -42,7 +62,7 @@ namespace ReactNet.Repository
             {
                 if (_gedcomDb == null)
                 {
-                    var gedcomRecordReader = GedcomRecordReader.CreateReader(_gedcomFile);
+                    var gedcomRecordReader = GedcomRecordReader.CreateReader(_configuration.GetSection("GedcomFIle").Value);
                     if (gedcomRecordReader.Parser.ErrorState != GedcomErrorState.NoError)
                     {
                         Console.WriteLine($"Could not read file, encountered error {gedcomRecordReader.Parser.ErrorState}.");
@@ -55,7 +75,7 @@ namespace ReactNet.Repository
             }
         }
 
-        public IEnumerable<FamilyTreePerson> GetFamilyTree()
+        public async Task<IEnumerable<FamilyTreePerson>> GetFamilyTree()
         {
             var familyTreePeople = new List<FamilyTreePerson>();
 
@@ -64,7 +84,7 @@ namespace ReactNet.Repository
                 var familyTreePerson = new FamilyTreePerson
                 {
                     Id = gdIndividual.XRefID,
-                    Title = NameFromGed(gdIndividual.GetName())
+                    Title = await NameFromGed(gdIndividual.XRefID, gdIndividual.GetName())
                 };
 
                 if (gdIndividual.Birth != null || gdIndividual.Death != null)
@@ -94,6 +114,13 @@ namespace ReactNet.Repository
                 if (gdIndividual.Sex == GedcomSex.Male)
                 {
                     familyTreePerson.Image = "/img/Male.png";
+                }
+
+                var overidePerson = await _personOverrideDb.GetPerson(gdIndividual.XRefID);
+
+                if (!string.IsNullOrWhiteSpace(overidePerson?.Portrait))
+                {
+                    familyTreePerson.Image = $"familytree/thumbnail/{overidePerson.Portrait}";
                 }
 
                 var familyRecord = gdIndividual.GetFamily();
@@ -164,7 +191,7 @@ namespace ReactNet.Repository
             var listPeople = new List<ListPerson>();
             foreach (var gdIndividual in GedcomDb.Individuals)
             {
-                var label = NameFromGed(gdIndividual.GetName());
+                var label = NameFromGed(gdIndividual.XRefID, gdIndividual.GetName()).Result;
                
                 if (gdIndividual.Birth != null || gdIndividual.Death != null)
                 {
@@ -194,7 +221,7 @@ namespace ReactNet.Repository
             return listPeople;
         }
 
-        public PersonDetails GetDetails(string id)
+        public async Task<PersonDetails> GetDetails(string id)
         {
             var gedPerson = GedcomDb.Individuals.First(i => i.XRefID == id);
 
@@ -233,7 +260,7 @@ namespace ReactNet.Repository
                     {
                         Relationship = relationship ?? "Spouse",
                         Id = spouseId,
-                        Name = NameFromGed(GedcomDb.Individuals.Find(i => i.XRefID == spouseId)?.GetName())
+                        Name = await NameFromGed(spouseId, GedcomDb.Individuals.Find(i => i.XRefID == spouseId)?.GetName())
                     });
                 }
 
@@ -248,7 +275,7 @@ namespace ReactNet.Repository
                             _ => "Child"
                         },
                         Id = child,
-                        Name = NameFromGed(GedcomDb.Individuals.Find(i => i.XRefID == child)?.GetName())
+                        Name = await NameFromGed(child, GedcomDb.Individuals.Find(i => i.XRefID == child)?.GetName())
                     });
                 }
             }
@@ -271,7 +298,7 @@ namespace ReactNet.Repository
                                 _ => "Parent"
                             },
                             Id = parentDb.XRefID,
-                            Name = NameFromGed(parentDb.GetName())
+                            Name = await NameFromGed(parentDb.XRefID, parentDb.GetName())
                         });
                     }
                 }
@@ -299,7 +326,7 @@ namespace ReactNet.Repository
                                 _ => "Sibling"
                             },
                             Id = sibling.XRefID,
-                            Name = NameFromGed(sibling.GetName())
+                            Name = await NameFromGed(sibling.XRefID, sibling.GetName())
                         });
                     }
                 }
@@ -307,12 +334,20 @@ namespace ReactNet.Repository
 
             var eventList = new List<PersonEvent>();
 
+            eventList.Add(new PersonEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Detail = gedPerson.XRefID,
+                Place = "XREF"
+            });
+
             foreach (var gedEvent in gedPerson.Events.OrderBy(e => e.Date))
             {
                 if (gedEvent.Date != null)
                 {
                     eventList.Add(new PersonEvent
                     {
+                        Id = Guid.NewGuid().ToString(),
                         EventDate = gedEvent.Date?.DateString,
                         Place = gedEvent.Place?.Name,
                         Detail = gedEvent.EventType switch
@@ -324,13 +359,54 @@ namespace ReactNet.Repository
                     });
                 }
             }
-
+           
             var personDetails = new PersonDetails
             {
-                Title = NameFromGed(gedPerson.GetName()),
+                Id = gedPerson.XRefID,
+                PreferredName = await NameFromGed(gedPerson.XRefID, gedPerson.GetName()),
                 Family = familyDetails,
-                Events = eventList
+                Events = eventList,
+                Birth = gedPerson.Birth?.Date?.DateString,
+                Death = gedPerson.Death?.Date?.DateString,
+                FullName = gedPerson.GetName().Name,
+                Portrait = gedPerson.Sex switch
+                {
+                    GedcomSex.Female => "Female.png",
+                    _ => "Male.png"
+                }
             };
+
+
+            try
+            {
+                var overridePerson = await _personOverrideDb.GetPerson(id);
+                if (overridePerson != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(overridePerson.FullName))
+                    {
+                        personDetails.FullName = overridePerson.FullName;
+                    }
+                    if (!string.IsNullOrWhiteSpace(overridePerson.Birth))
+                    {
+                        personDetails.Birth = overridePerson.Birth;
+                    }
+                    if (!string.IsNullOrWhiteSpace(overridePerson.Death))
+                    {
+                        personDetails.Death = overridePerson.Death;
+                    }
+                    if (!string.IsNullOrWhiteSpace(overridePerson.Note))
+                    {
+                        personDetails.Note = overridePerson.Note;
+                    }
+                    if (!string.IsNullOrWhiteSpace(overridePerson.Portrait))
+                    {
+                        personDetails.Portrait = overridePerson.Portrait;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+            }
 
             return personDetails;
         }

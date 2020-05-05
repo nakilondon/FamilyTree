@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using LightInject;
 using ReactNet.Models;
-using ReactNet.Repository;
+using ReactNet.Repositories;
 
 namespace ReactNet.DependencyInjection
 {
@@ -23,8 +23,14 @@ namespace ReactNet.DependencyInjection
                     .ForMember(dest => dest.BirthDate,
                         opt => opt.MapFrom(src => src.BirthDate.Date));
                 cfg.CreateMap<PersonDb, PersonDetails>()
-                    .ForMember(dest => dest.Title,
+                    .ForMember(dest => dest.PreferredName,
                         opt => opt.MapFrom(src => src.PreferredName));
+                cfg.CreateMap<PersonDetails, PersonOverride>()
+                    .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null && (string)srcMember != ""));
+                cfg.CreateMap<PersonOverride, PersonDetails>()
+                    .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null && (string)srcMember != ""));
+                cfg.CreateMap<ImageData, ImageDb>();
+                cfg.CreateMap<ImageDb, ImageData>();
             }));
 
             serviceRegistry.RegisterInstance(mapper);

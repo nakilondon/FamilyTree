@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import FamilyTreeDiagram from './FamilyDiagram'
+import Grid from '@material-ui/core/Grid';
 
 export default class FamilyTree extends Component {
     constructor(props) {
@@ -21,11 +22,7 @@ export default class FamilyTree extends Component {
             ? <p><em>Loading...</em></p>
             : <FamilyTreeDiagram familyItems={this.state.itemsData} id={this.props.id} selectedPerson={this.props.selectedPerson}/>
         
-        return (
-            <div className="col-md-10">
-                {contents}
-            </div>
-        );
+        return (<Grid container align="center">{contents}</Grid>);
     }
 
     async populateItems() {

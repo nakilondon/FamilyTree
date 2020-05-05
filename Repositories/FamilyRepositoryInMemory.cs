@@ -1,10 +1,11 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using AutoMapper;
 using ReactNet.Models;
 
-namespace ReactNet.Repository
+namespace ReactNet.Repositories
 {
     public class FamilyRepositoryInMemory : IFamilyRepository
     {
@@ -17,7 +18,7 @@ namespace ReactNet.Repository
             _peopleDb = peopleDb;
         }
 
-        public IEnumerable<FamilyTreePerson> GetFamilyTree()
+        public async Task<IEnumerable<FamilyTreePerson>> GetFamilyTree()
         {
             var peopleTree = new List<FamilyTreePerson>();
 
@@ -80,7 +81,7 @@ namespace ReactNet.Repository
             return peopleList;
         }
 
-        public PersonDetails GetDetails(string id)
+        public async Task<PersonDetails> GetDetails(string id)
         {
             if (!_peopleDb.ContainsKey(id))
             {

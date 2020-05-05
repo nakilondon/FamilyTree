@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReactNet.DependencyInjection;
-using ReactNet.Repository;
+using ReactNet.Repositories;
 
 namespace ReactNet
 {
@@ -35,13 +35,9 @@ namespace ReactNet
                 configuration.RootPath = "ClientApp/build";
             });
 
-            //var gedcom = new Gedcom();
-            //var gedcomDb = gedcom.CreatePersonDbFromGedcom("..\\FamilyTree.ged");
-            //services.AddSingleton(gedcomDb);
-
-            //services.AddSingleton<IFamilyRepository, FamilyRepositoryInMemory>();
-            var gedFamilyRepository = new GedFamilyRepository("..\\FamilyTree.ged");
-            services.AddSingleton< IFamilyRepository>(gedFamilyRepository);
+            services.AddSingleton< IFamilyRepository, GedFamilyRepository>();
+            services.AddSingleton<IPersonOverride, PersonOverrideDb>();
+            services.AddSingleton<IImagesRepository, ImagesRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import PersonTable from './buildTable';
+import Grid from '@material-ui/core/Grid';
+import './PersonDetails.css'
 
 export default class PersonDetails extends Component {
   static displayName = PersonDetails.name;
@@ -12,22 +14,26 @@ export default class PersonDetails extends Component {
   componentDidMount() {
     this.populatePersonData(this.props.id);
   }
-  
-  render() {
-    if (this.state.id != this.props.id)
+
+  componentDidUpdate() {
+    if (this.state.id !== this.props.id)
     {
       this.setState({loadding: true, id: this.props.id});
       this.populatePersonData(this.props.id);      
     }
+  }
 
-    let contents = this.state.loading
+  render() {
+     let contents = this.state.loading
       ? <p><em>Loading...</em></p>
       : <PersonTable details={this.state.Details} selectedPerson={this.props.selectedPerson}/>
 
     return (
-      <div className="col-md-2">
-        {contents}
-      </div>
+      <Grid container space={5} direction="row" justify="center" alignItems="center">
+        <Grid item>
+          {contents}
+        </Grid>
+      </Grid>
     );
   }
 

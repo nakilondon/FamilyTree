@@ -1,11 +1,12 @@
 import React, {Component} from 'react'
+import Grid from '@material-ui/core/Grid';
 
 export default class PersonSelect extends Component {
     state = {}
 
     constructor(props) {
         super(props);
-        this.state = { People: [], loading: true};
+        this.state = {  People: [], loading: true }
     }
 
     componentDidMount() {
@@ -19,16 +20,17 @@ export default class PersonSelect extends Component {
     
     static renderSelect(people, onSeachChange, currentValue) {
         return (
-            <div className="form-group row mt-3">
-                <div className="offset-md-1 col-md-2">
-                    Select
-                </div>
-                <div className="col-md-9">
-                    <select className="form-control" value={currentValue} onChange={onSeachChange}>
-                        {people.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-                    </select>
-                </div>
-            </div>
+                <Grid container spacing={3} direction="row" justify="space-between" alignItems="center">
+                    <Grid item>
+                        Current Person
+                    </Grid>
+                    <Grid item>
+                        <select className="form-control" value={currentValue} onChange={onSeachChange}>
+                            {people.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+                        </select>
+                    </Grid>
+                </Grid>
+
         );
     }
 

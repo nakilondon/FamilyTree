@@ -1,9 +1,8 @@
-
 .FamilyTree {
     position: relative;
     overflow: auto;
     width: 100%;
-    height: 100%;
+    height: 700px;
     border-width: 1px;
     border-style: dotted; 
 }
