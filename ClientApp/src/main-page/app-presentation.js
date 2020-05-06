@@ -5,7 +5,8 @@ import EditDetails from '../EditDetails'
 import { makeStyles } from '@material-ui/core/styles';
 import Header from '../Header';
 import Upload from '../UploadImage';
-import GetImage from '../GetImage';
+import { useSelector } from 'react-redux'
+import { ViewMode } from '../actions';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -18,16 +19,15 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const renderSwitch = (props) => {
-  switch(props.activeView) {
-    case 'Detail':
+const ViewSwitch = (props) => {
+  const view = useSelector(state => state.viewMode )
+  switch(view) {
+    case ViewMode.SHOW_DETAIL:
       return <PersonDetails id={props.activePerson} selectedPerson={props.selectedPerson}/>
-    case 'Edit':
+    case ViewMode.SHOW_EDIT:
       return <EditDetails id={props.activePerson}/>
-    case 'Upload':
+    case ViewMode.SHOW_UPLOAD:
       return <Upload/>
-    case 'GetImage':
-      return <GetImage  image="granddadplane.jpg"/>
     default:
       return <FamilyTree id={props.activePerson} selectedPerson={props.selectedPerson}/> 
   }
@@ -36,17 +36,10 @@ const renderSwitch = (props) => {
 const AppPresentation = (props) => {
   const classes = useStyles();
 
-  if (!props.activePerson)
-    return (
-      <p>...Loading</p>
-    );
-
-
   return (
   <div className={classes.root}>
-      <Header subtitle="Family Archive" activePerson={props.activePerson} selectedPerson={props.selectedPerson} 
-        activeView={props.activeView} selectedView={props.selectedView}/>
-      {renderSwitch(props)}
+      <Header subtitle="Family Archive" activePerson={props.activePerson} selectedPerson={props.selectedPerson}/>
+      {ViewSwitch(props)}
   </div>
   );
 }

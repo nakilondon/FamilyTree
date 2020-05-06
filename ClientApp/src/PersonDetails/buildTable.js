@@ -7,7 +7,6 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import GetImage from '../GetImage';
 import { Typography, Grid } from '@material-ui/core';
 import './PersonDetails.css'
 

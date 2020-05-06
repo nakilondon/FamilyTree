@@ -1,44 +1,21 @@
-import React, {Component, useContext} from 'react';
-import Grid from '@material-ui/core/Grid';
-import ToggleButton from '@material-ui/lab/ToggleButton';
+import React from 'react'
+import ViewLink from '../containers/ViewLink';
+import { ViewMode } from '../actions';
+import { useSelector } from 'react-redux'
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 
-export default class ViewSelect extends Component {
-    state = {}
- 
-    handleChange = (event, newView) => {
-        this.props.selectedView(newView);
-    };
-
-
-  children = [
-    <ToggleButton key="FamilyTree" value="FamilyTree">
-      FamilyTree
-    </ToggleButton>,
-    <ToggleButton key="Detail" value="Detail">
-      Detail
-    </ToggleButton>,
-    <ToggleButton key="Edit" value="Edit">
-      Edit
-    </ToggleButton>,
-    <ToggleButton key="Upload" value="Upload">
-      Upload
-    </ToggleButton>,
-    <ToggleButton key="GetImage" value="GetImage">
-      Get Image
-    </ToggleButton>
-  ];
-
-  render () {
-      
-      return (
-        <Grid item>
-        <ToggleButtonGroup size="small" value={this.props.activeView} exclusive onChange={this.handleChange}>
-          {this.children}
-        </ToggleButtonGroup>
-      </Grid> );
-  }
-      
-    
-  
+const ViewSelect = () => {
+  const currentView = useSelector(state => state.viewMode )
+  return (
+  <div>
+    <ToggleButtonGroup value={currentView}>
+      <ViewLink filter={ViewMode.SHOW_FAMILY_TREE}>Family Tree</ViewLink>
+      <ViewLink filter={ViewMode.SHOW_DETAIL}>Detail</ViewLink>
+      <ViewLink filter={ViewMode.SHOW_EDIT}>Edit</ViewLink>
+      <ViewLink filter={ViewMode.SHOW_UPLOAD}>UPLOAD</ViewLink>
+    </ToggleButtonGroup>
+  </div>
+  );
 }
+
+export default ViewSelect
