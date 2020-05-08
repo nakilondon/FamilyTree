@@ -16,12 +16,14 @@ namespace ReactNet.Repositories
         private readonly IConfiguration _configuration;
         private readonly IPersonOverride _personOverrideDb;
         private readonly IMapper _mapper;
+        private readonly IGedcom _gedcom;
 
-        public GedFamilyRepository(IConfiguration configuration, IPersonOverride personOverrideDb, IMapper mapper)
+        public GedFamilyRepository(IConfiguration configuration, IPersonOverride personOverrideDb, IMapper mapper, IGedcom gedcom)
         {
             _configuration = configuration;
             _personOverrideDb = personOverrideDb;
             _mapper = mapper;
+            _gedcom = gedcom;
         }
 
         public async Task<string> NameFromGed(string id, GedcomName gedcomName)
@@ -77,6 +79,7 @@ namespace ReactNet.Repositories
 
         public async Task<IEnumerable<FamilyTreePerson>> GetFamilyTree()
         {
+            await _gedcom.CreatePersonDbFromGedcom();
             var familyTreePeople = new List<FamilyTreePerson>();
 
             foreach (var gdIndividual in GedcomDb.Individuals)

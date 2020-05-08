@@ -1,9 +1,10 @@
 ﻿using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace ReactNet.Repositories
 {
     public interface IGedcom
     {
-        ConcurrentDictionary<string, PersonDb> CreatePersonDbFromGedcom(string gedcomFile);
+        Task<ConcurrentDictionary<string, PersonDb>> CreatePersonDbFromGedcom();
     }
 }

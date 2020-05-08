@@ -5,10 +5,9 @@ import { useSelector } from 'react-redux'
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 
 const ViewSelect = () => {
-  const currentView = useSelector(state => state.viewMode )
   return (
   <div>
-    <ToggleButtonGroup value={currentView}>
+    <ToggleButtonGroup exclusive>
       <ViewLink filter={ViewMode.SHOW_FAMILY_TREE}>Family Tree</ViewLink>
       <ViewLink filter={ViewMode.SHOW_DETAIL}>Detail</ViewLink>
       <ViewLink filter={ViewMode.SHOW_EDIT}>Edit</ViewLink>

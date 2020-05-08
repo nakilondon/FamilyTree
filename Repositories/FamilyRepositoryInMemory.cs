@@ -9,10 +9,10 @@ namespace ReactNet.Repositories
 {
     public class FamilyRepositoryInMemory : IFamilyRepository
     {
-        private ConcurrentDictionary<string, PersonDb> _peopleDb;
+        private ConcurrentDictionary<string, PersonOldDb> _peopleDb;
         private readonly IMapper _mapper;
 
-        public FamilyRepositoryInMemory(IMapper mapper, ConcurrentDictionary<string, PersonDb> peopleDb)
+        public FamilyRepositoryInMemory(IMapper mapper, ConcurrentDictionary<string, PersonOldDb> peopleDb)
         {
             _mapper = mapper;
             _peopleDb = peopleDb;

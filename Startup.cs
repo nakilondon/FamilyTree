@@ -38,6 +38,8 @@ namespace ReactNet
             services.AddSingleton< IFamilyRepository, GedFamilyRepository>();
             services.AddSingleton<IPersonOverride, PersonOverrideDb>();
             services.AddSingleton<IImagesRepository, ImagesRepository>();
+            services.AddSingleton<IPersonRepository, PersonRepository>();
+            services.AddSingleton<IGedcom, Gedcom>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

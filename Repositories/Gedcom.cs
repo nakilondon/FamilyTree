@@ -1,14 +1,28 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using AutoMapper;
 using GeneGenie.Gedcom;
 using GeneGenie.Gedcom.Enums;
 using GeneGenie.Gedcom.Parser;
+using Microsoft.Extensions.Configuration;
+
 
 namespace ReactNet.Repositories
 {
     public class Gedcom : IGedcom
     {
+        private readonly IConfiguration _configuration;
+        private readonly IPersonRepository _personRepository;
+
+        public Gedcom(IConfiguration configuration, IPersonRepository personRepository)
+        {
+            _configuration = configuration;
+            _personRepository = personRepository;
+        }
+
         private EventDate EventDateFromGed(GedcomDate gedcomDate)
         {
             var eventDate = new EventDate();
@@ -39,8 +53,9 @@ namespace ReactNet.Repositories
             return name;
         }
 
-        public ConcurrentDictionary<string, PersonDb> CreatePersonDbFromGedcom(string gedcomFile)
+        public async Task<ConcurrentDictionary<string, PersonDb>> CreatePersonDbFromGedcom()
         {
+            var gedcomFile = _configuration.GetSection("GedcomFIle").Value;
             var personDictionary = new ConcurrentDictionary<string, PersonDb>();
             var gedcomRecordReader = GedcomRecordReader.CreateReader(gedcomFile);
             if (gedcomRecordReader.Parser.ErrorState != GedcomErrorState.NoError)
@@ -52,38 +67,96 @@ namespace ReactNet.Repositories
 
             foreach (var gedcomDbIndividual in gedcomDb.Individuals)
             {
+                var relationships = new List<RelationshipTable>();
                 var gedName = gedcomDbIndividual.GetName();
+
                 var personDb = new PersonDb
                 {
-                    Id = gedcomDbIndividual.XRefID,
-                    Gender = gedcomDbIndividual.Sex == GedcomSex.Female ? Gender.Female : Gender.Male,
+                    GedcomId = gedcomDbIndividual.XRefID,
+                    Gender = gedcomDbIndividual.Sex == GedcomSex.Female ? Gender.Female.ToString() : Gender.Male.ToString(),
                     PreferredName = NameFromGed(gedName),
                     Surname = gedName.Surname,
-                    GivenNames = gedName.Given.Split(' '),
-                    Parents = new List<string>(),
-                    Spouses = new List<string>(),
-                    Children = new List<string>(),
-                    Siblings = new List<string>(),
-                    Events = new List<PersonEvent>()
+                    GivenNames = gedName.Given,
+                    Dead = gedcomDbIndividual.Dead
                 };
 
-                if (gedcomDbIndividual.Birth != null || gedcomDbIndividual.Death != null)
+                if (gedcomDbIndividual.Birth != null)
                 {
-                    personDb.Description = "(";
-                    if (gedcomDbIndividual.Birth?.Date?.DateTime1 != null)
+                    if (gedcomDbIndividual.Birth?.Date != null)
                     {
-                        personDb.BirthDate = (DateTime)gedcomDbIndividual.Birth.Date.DateTime1;   
-                        personDb.Description += gedcomDbIndividual.Birth.Date.DateString;
+                        if (gedcomDbIndividual.Birth.Date?.DateTime1 != null)
+                            personDb.BirthRangeStart = (DateTime) gedcomDbIndividual.Birth.Date.DateTime1;
+                        if (gedcomDbIndividual.Birth.Date?.DateTime2 != null)
+                            personDb.BirthRangeEnd = (DateTime) gedcomDbIndividual.Birth.Date.DateTime2;
                     }
 
-                    
-                    if (gedcomDbIndividual.Death?.Date?.DateTime1 != null)
+                    if (gedcomDbIndividual.Birth?.Place?.Name != null)
+                        personDb.PlaceOfBirth = gedcomDbIndividual.Birth.Place.Name;
+                }
+
+                if (gedcomDbIndividual.Death != null)
+                {
+                    if (gedcomDbIndividual.Death?.Date != null)
                     {
-                        personDb.DeathDate = (DateTime) gedcomDbIndividual.Death.Date.DateTime1;
-                        personDb.Description += " - " + gedcomDbIndividual.Death.Date.DateString;
+                        if (gedcomDbIndividual.Death.Date?.DateTime1 != null)
+                            personDb.DeathRangeStart = (DateTime) gedcomDbIndividual.Death.Date.DateTime1;
+                        if (gedcomDbIndividual.Death.Date?.DateTime2 != null)
+                            personDb.DeathRangeEnd = (DateTime) gedcomDbIndividual.Death.Date.DateTime2;
                     }
-                    
-                    personDb.Description += ")";
+
+                    if (gedcomDbIndividual.Death?.Place?.Name != null)
+                    {
+                        personDb.PlaceOfDeath = gedcomDbIndividual.Death.Place.Name;
+                    }
+                }
+
+                var familyRecords =
+                    gedcomDb.Families.FindAll(f => f.Husband == gedcomDbIndividual.XRefID || f.Wife == gedcomDbIndividual.XRefID);
+
+                foreach (var familyRecord in familyRecords)
+                {
+
+                    string spouseId = null;
+                    var relationship = Relationship.Spouse;
+
+                    var wife = familyRecord.Wife;
+                    if (wife != null && wife != gedcomDbIndividual.XRefID)
+                    {
+                        relationship = Relationship.Wife;
+                        spouseId = wife;
+                    }
+                    else
+                    {
+                        var husband = familyRecord.Husband;
+                        if (husband != null && husband != gedcomDbIndividual.XRefID)
+                        {
+                            relationship = Relationship.Husband;
+                            spouseId = husband;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(spouseId))
+                    {
+                        relationships.Add(new RelationshipTable
+                        {
+                            PersonGedcomId = spouseId,
+                            Relationship = relationship
+                        });
+                    }
+
+                    foreach (var child in familyRecord.Children)
+                    {
+                        relationships.Add(new RelationshipTable
+                        {
+                            Relationship = gedcomDb.Individuals.Find(i => i.XRefID == child)?.Sex switch
+                            {
+                                GedcomSex.Female => Relationship.Daughter,
+                                GedcomSex.Male => Relationship.Son,
+                                _ => Relationship.Child
+                            },
+                            PersonGedcomId = child,
+                        });
+                    }
                 }
 
                 foreach (var family in gedcomDbIndividual.ChildIn)
@@ -95,79 +168,71 @@ namespace ReactNet.Repositories
                     {
                         if (!parentDb.Equals(gedcomDbIndividual))
                         {
-                            personDb.Parents.Add(parentDb.XRefID);
+                            relationships.Add(new RelationshipTable
+                            {
+                                Relationship = parentDb.Sex switch
+                                {
+                                    GedcomSex.Female => Relationship.Mother,
+                                    GedcomSex.Male => Relationship.Father,
+                                    _ => Relationship.Parent
+                                },
+                                PersonGedcomId = parentDb.XRefID
+                            });
                         }
                     }
+                }
 
-                    var siblingsDb = gedcomDb
-                        .Individuals.FindAll(i => i.ChildIn != null && i.ChildInFamily(family.Family));
-                    foreach (var sibling in siblingsDb)
+                var siblingsFamilyRecords =
+                    gedcomDb.Families.FindAll(f => relationships.Find(
+                        fd => fd.Relationship == Relationship.Father && fd.PersonGedcomId == f.Husband ||
+                              fd.Relationship == Relationship.Mother && fd.PersonGedcomId == f.Wife) != null);
+
+                foreach (var siblingsFamily in siblingsFamilyRecords)
+                {
+                    var siblings = gedcomDb.Individuals.FindAll(i => siblingsFamily.Children.Contains(i.XRefID))
+                        .OrderBy(i => i.Birth?.Date);
+
+                    foreach (var sibling in siblings)
                     {
                         if (!sibling.Equals(gedcomDbIndividual))
                         {
-                            personDb.Siblings.Add(sibling.XRefID);
-
-                        }
-                    }
-
-                    foreach (var gedEvent in gedcomDbIndividual.Events)
-                    {
-                        var personEvent = new PersonEvent
-                        {
-                            Type = gedEvent.EventType switch
+                            relationships.Add(new RelationshipTable
                             {
-                                GedcomEventType.Birth => EventType.Birth,
-                                GedcomEventType.DEAT => EventType.Death,
-                                _ => EventType.Other,
-                            },
-                            EventDate = gedEvent.Date.DateString,
-                            Source = new List<string>(),
-                            Place = gedEvent.Place?.Name,
-                            Detail = gedEvent.Classification
-                        };
-
-                        foreach (var source in gedEvent.Sources)
-                        {
-                            personEvent.Source.Add(source.Text);   
+                                Relationship = sibling.Sex switch
+                                {
+                                    GedcomSex.Female => Relationship.Sister,
+                                    GedcomSex.Male => Relationship.Brother,
+                                    _ => Relationship.Sibling
+                                },
+                                PersonGedcomId = sibling.XRefID
+                            });
                         }
-
-                        personDb.Events.Add(personEvent);
                     }
                 }
 
-                var familyRecords =
-                    gedcomDb.Families.FindAll(f =>
-                        f.Husband == gedcomDbIndividual.XRefID || f.Wife == gedcomDbIndividual.XRefID);
-                foreach (var familyRecord in familyRecords)
+                personDb.Relationships = relationships;
+
+
+               // await _personRepository.AddPerson(personDb);
+                personDictionary.TryAdd(personDb.GedcomId, personDb);
+                try
                 {
-                    string spouseId = null;
-                    var wife = familyRecord.Wife;
-                    if (wife != null && wife != gedcomDbIndividual.XRefID)
+                    var returnedPerson = await _personRepository.FindPerson(personDb.GedcomId);
+                    foreach (var relationship in relationships)
                     {
-                        spouseId = wife;
-                    }
-                    else
-                    {
-                        var husband = familyRecord.Husband;
-                        if (husband != null && husband != gedcomDbIndividual.XRefID)
+                        var relationshipPerson = await _personRepository.FindPerson(relationship.PersonGedcomId);
+                        var relationshipDb = new RelationshipDb
                         {
-                            spouseId = husband;
-                        }
-                    }
+                            Person1 = returnedPerson.Id,
+                            Person2 = relationshipPerson.Id,
+                            RelationShip = relationship.Relationship.ToString()
+                        };
+                        await _personRepository.AddRelationship(relationshipDb);
 
-                    if (!String.IsNullOrEmpty(spouseId))
-                    {
-                        personDb.Spouses.Add(spouseId);
                     }
-
-                    foreach (var child in familyRecord.Children)
-                    {
-                        personDb.Children.Add(child);
-                    }
-
                 }
-
-                personDictionary.TryAdd(personDb.Id, personDb);
+                catch (Exception e)
+                { }
             }
 
             return personDictionary;
