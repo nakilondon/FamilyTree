@@ -5,7 +5,7 @@ export default class App extends Component {
   state = {setView: this.setView}
 
   componentDidMount(){
-    this.setState({activePerson: "XREF1"});
+    this.setState({activePerson: 253});
   }
 
   selectedPerson = (person) => {

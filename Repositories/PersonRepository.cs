@@ -1,17 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Dapper;
 using MySql.Data.MySqlClient;
 
 namespace ReactNet.Repositories
 {
+
     public class PersonRepository : IPersonRepository
     {
+        private readonly IMapper _mapper;
         private readonly string _connectionString;
 
-        public PersonRepository(IConfiguration configuration)
+        public PersonRepository(IConfiguration configuration, IMapper mapper)
         {
+            _mapper = mapper;
             _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
         public async Task AddPerson(PersonDb personDb)
@@ -36,7 +41,7 @@ namespace ReactNet.Repositories
             var db = new MySqlConnection(_connectionString);
             try
             {
-                var response = await db.ExecuteAsync(@"
+                await db.ExecuteAsync(@"
 INSERT INTO People (
 GedcomID, 
 Gender,
@@ -67,11 +72,38 @@ PlaceOfDeath
             {}
         }
 
-        public async Task<PersonDb> FindPerson(string gedcomId)
+        public async Task<PersonDb> FindPerson(int id)
         {
-            var db = new MySqlConnection(_connectionString);
+            var lookup = new Dictionary<int, PersonDb>();
 
-            return await db.QueryFirstOrDefaultAsync<PersonDb>("SELECT * FROM People WHERE GedcomId = @GedcomId;", new { GedcomId = gedcomId });
+            var db = new MySqlConnection(_connectionString);
+            try
+            {
+ 
+               var result = await db.QueryAsync<PersonTableDb, RelationshipDb, PersonDb>(@"
+SELECT p.*, r.*
+FROM People p
+INNER JOIN Relationship r ON p.Id = r.Person1 WHERE p.Id = @Id",
+                   (p, r) =>
+                   {
+                       PersonDb personDb;
+                       if (!lookup.TryGetValue(p.Id, out personDb))
+                       {
+                           lookup.Add(p.Id, personDb =  _mapper.Map<PersonDb>(p));
+                       }
+
+                       if (personDb.Relationships == null)
+                       {
+                           personDb.Relationships = new List<RelationshipTable>();
+                       }
+                       personDb.Relationships.Add(new RelationshipTable {PersonId = r.Person2, Relationship = Enum.Parse<Relationship>(r.RelationShip)});
+                       return personDb;
+                   }, splitOn: "Person1",
+                   param: new {@Id = id});
+            } catch (Exception e)
+            {}
+
+            return lookup[id];
 
         }
 
@@ -86,5 +118,45 @@ PlaceOfDeath
             { }
 
         }
+
+        public async Task<IDictionary<int, PersonDb>> FindAllPeople()
+        {
+
+            var lookup = new Dictionary<int, PersonDb>();
+
+            var db = new MySqlConnection(_connectionString);
+            try
+            {
+
+                var result = await db.QueryAsync<PersonTableDb, RelationshipDb, PersonDb>(@"
+SELECT p.*, r.*
+FROM People p
+INNER JOIN Relationship r ON p.Id = r.Person1",
+                    (p, r) =>
+                    {
+                        PersonDb personDb;
+                        if (!lookup.TryGetValue(p.Id, out personDb))
+                        {
+                            lookup.Add(p.Id, personDb = _mapper.Map<PersonDb>(p));
+                        }
+
+                        if (personDb.Relationships == null)
+                        {
+                            personDb.Relationships = new List<RelationshipTable>();
+                        }
+
+                        personDb.Relationships.Add(new RelationshipTable
+                            {PersonId = r.Person2, Relationship = Enum.Parse<Relationship>(r.RelationShip)});
+                        return personDb;
+                    }, splitOn: "Person1");
+            }
+            catch (Exception e)
+            {
+            }
+
+            return lookup;
+        }
+
+    
     }
 }

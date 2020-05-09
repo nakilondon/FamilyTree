@@ -29,10 +29,30 @@ namespace ReactNet.Repositories
     {
         public Relationship Relationship { get; set; }
         public int PersonId { get; set; }
-        public string PersonGedcomId { get; set; }
     }
 
     public class PersonDb
+    {
+        public int Id { get; set; }
+        public string GedcomId { get; set; }
+        public Gender Gender { get; set; }
+        public string PreferredName { get; set; }
+        public string GivenNames { get; set; }
+        public string Surname { get; set; }
+        public string NickName { get; set; }
+        public DateTime BirthRangeStart { get; set; }
+        public DateTime BirthRangeEnd { get; set; }
+        public string PlaceOfBirth { get; set; }
+        public bool Dead { get; set; }
+        public DateTime DeathRangeStart { get; set; }
+        public DateTime DeathRangeEnd { get; set; }
+        public string PlaceOfDeath { get; set; }
+        public string Note { get; set; }
+        public string Portrait { get; set; }
+        public IList<RelationshipTable> Relationships { get; set; }
+    }
+
+    public class PersonTableDb
     {
         public int Id { get; set; }
         public string GedcomId { get; set; }
@@ -50,7 +70,6 @@ namespace ReactNet.Repositories
         public string PlaceOfDeath { get; set; }
         public string Note { get; set; }
         public string Portrait { get; set; }
-        public IEnumerable<RelationshipTable> Relationships { get; set; }
     }
 
     public class RelationshipDb

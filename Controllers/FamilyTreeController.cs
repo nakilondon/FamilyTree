@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ReactNet.Models;
 using ReactNet.Repositories;
@@ -14,23 +12,17 @@ namespace ReactNet.Controllers
     public class FamilyTreeController : ControllerBase
     {
         private readonly IFamilyRepository _familyRepository;
-        private readonly IPersonOverride _personOverrideRepository;
-        private readonly IMapper _mapper;
         private readonly IImagesRepository _imagesRepository;
 
         public FamilyTreeController(IFamilyRepository familyRepository,
-            IPersonOverride personOverrideRepository,
-            IMapper mapper,
             IImagesRepository imagesRepository)
         {
             _familyRepository = familyRepository;
-            _personOverrideRepository = personOverrideRepository;
-            _mapper = mapper;
             _imagesRepository = imagesRepository;
         }
 
         [HttpGet("{id}")]
-        public async Task<PersonDetails> Get(string id)
+        public async Task<PersonDetails> Get(int id)
         {
             var returnValues = await _familyRepository.GetDetails(id);
 
@@ -45,32 +37,9 @@ namespace ReactNet.Controllers
         }
 
         [HttpGet("list")]
-        public IEnumerable<ListPerson> GetList()
+        public async Task<IEnumerable<ListPerson>> GetList()
         {
-            return _familyRepository.GetList();
-        }
-
-        [HttpPost("Override")]
-        public async Task<IActionResult> OverridePerson([FromBody] PersonOverride personOverride)
-        {
-            if (await _personOverrideRepository.GetPerson(personOverride.Id) == null)
-            {
-                await _personOverrideRepository.AddPerson(personOverride);
-            }
-            else
-            {
-                await _personOverrideRepository.UpdatePerson(personOverride);
-            }
-
-            return Ok();
-        }
-
-        [HttpGet("OverrideDetails/{id}")]
-        public async Task<PersonOverride> OverrideDetails(string id)
-        {
-            var personDetails = await _familyRepository.GetDetails(id);
-            var overrideDetails = _mapper.Map<PersonOverride>(personDetails);
-            return overrideDetails;
+            return await _familyRepository.GetList();
         }
 
         [HttpPost("Upload")]
