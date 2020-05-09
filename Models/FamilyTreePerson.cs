@@ -12,14 +12,14 @@ namespace ReactNet.Models
 
     public class FamilyTreePerson
     {
-        public string Id { get; set; }
-        public List<string> Spouses { get; set; }
-        public List<string> Parents { get; set; }
+        public int Id { get; set; }
+        public IList<int> Spouses { get; set; }
+        public IList<int> Parents { get; set; }
         public string Title { get; set; }
         public string Label { get; set; }
         public string Description { get; set; }
         public string Image { get; set; }
-        public string RelativeItem { get; set; }
+        public int RelativeItem { get; set; }
         public short Position { get; set; }
         public string ItemTitleColor { get; set; }
         public AdviserPlacementType PlacementType { get; set; }

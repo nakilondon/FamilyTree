@@ -6,45 +6,76 @@ namespace ReactNet.Repositories
     public enum Gender
     {
         Male = 0,
-        Female = 1
+        Female = 1,
     }
 
-    public enum EventType
+    public enum Relationship
     {
-        Birth,
-        Death,
-        Other
+        Mother = 0,
+        Father = 1,
+        Wife = 2,
+        Husband = 4,
+        Son = 5,
+        Daughter = 6,
+        Spouse = 7,
+        Child = 8,
+        Parent = 9,
+        Sister = 10,
+        Brother = 11,
+        Sibling = 12
     }
 
-    public class EventDate
+    public class RelationshipTable
     {
-        public bool Certain { get; set; }
-        public DateTime Date { get; set; }
-    }
-    public class PersonEvent
-    {
-        public string Id { get; set; }
-        public EventType Type { get; set; }
-        public string EventDate { get; set; }
-        public string Place { get; set; }
-        public List<string> Source { get; set; }
-        public string Detail { get; set; }
+        public Relationship Relationship { get; set; }
+        public int PersonId { get; set; }
     }
 
     public class PersonDb
     {
-        public string Id { get; set; }
-        public List<string> Spouses { get; set; }
-        public List<string> Parents { get; set; }
-        public List<string> Children { get; set; }
-        public List<string> Siblings { get; set; }
-        public string PreferredName { get; set; }
-        public string[] GivenNames { get; set; }
-        public List<PersonEvent> Events { get; set; }
-        public string Surname { get; set; }
-        public string Description { get; set; }
+        public int Id { get; set; }
+        public string GedcomId { get; set; }
         public Gender Gender { get; set; }
-        public DateTime BirthDate { get; set; }
-        public DateTime DeathDate { get; set; }
+        public string PreferredName { get; set; }
+        public string GivenNames { get; set; }
+        public string Surname { get; set; }
+        public string NickName { get; set; }
+        public DateTime BirthRangeStart { get; set; }
+        public DateTime BirthRangeEnd { get; set; }
+        public string PlaceOfBirth { get; set; }
+        public bool Dead { get; set; }
+        public DateTime DeathRangeStart { get; set; }
+        public DateTime DeathRangeEnd { get; set; }
+        public string PlaceOfDeath { get; set; }
+        public string Note { get; set; }
+        public string Portrait { get; set; }
+        public IList<RelationshipTable> Relationships { get; set; }
+    }
+
+    public class PersonTableDb
+    {
+        public int Id { get; set; }
+        public string GedcomId { get; set; }
+        public string Gender { get; set; }
+        public string PreferredName { get; set; }
+        public string GivenNames { get; set; }
+        public string Surname { get; set; }
+        public string NickName { get; set; }
+        public DateTime BirthRangeStart { get; set; }
+        public DateTime BirthRangeEnd { get; set; }
+        public string PlaceOfBirth { get; set; }
+        public bool Dead { get; set; }
+        public DateTime DeathRangeStart { get; set; }
+        public DateTime DeathRangeEnd { get; set; }
+        public string PlaceOfDeath { get; set; }
+        public string Note { get; set; }
+        public string Portrait { get; set; }
+    }
+
+    public class RelationshipDb
+    {
+        public int Person1 { get; set; }
+        public string RelationShip { get; set; }
+        public int Person2 { get; set; }
     }
 }

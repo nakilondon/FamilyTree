@@ -7,7 +7,7 @@ namespace ReactNet.Repositories
     public interface IFamilyRepository
     {
         Task<IEnumerable<FamilyTreePerson>> GetFamilyTree();
-        IEnumerable<ListPerson> GetList();
-        Task<PersonDetails> GetDetails(string id);
+        Task<IEnumerable<ListPerson>> GetList();
+        Task<PersonDetails> GetDetails(int id);
     }
 }
