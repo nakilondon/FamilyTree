@@ -3,7 +3,7 @@ import logo from './logo.png';
 import { Typography } from '@material-ui/core';
 import Grid from '@material-ui/core/Grid';
 import SelectPerson from './person-select'
-import View from './view-select';
+import ViewSelect from './view-select';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 
@@ -28,7 +28,7 @@ const Header = (props) => (
                     <SelectPerson id={props.activePerson} selectedPerson={props.selectedPerson}/>
                 </Grid>
                 <Grid item>
-                    <View selectedView={props.selectedView} activeView={props.activeView}/>
+                    <ViewSelect />
                 </Grid>
             </Grid>
         </Toolbar>

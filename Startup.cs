@@ -35,9 +35,10 @@ namespace ReactNet
                 configuration.RootPath = "ClientApp/build";
             });
 
-            services.AddSingleton< IFamilyRepository, GedFamilyRepository>();
-            services.AddSingleton<IPersonOverride, PersonOverrideDb>();
+            services.AddSingleton< IFamilyRepository, FamilyRepository>();
             services.AddSingleton<IImagesRepository, ImagesRepository>();
+            services.AddSingleton<IPersonRepository, PersonRepository>();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

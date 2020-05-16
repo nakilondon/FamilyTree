@@ -13,7 +13,6 @@
     <PackageReference Include="AutoMapper" Version="9.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="Dapper" Version="2.0.35" />
-    <PackageReference Include="GeneGenie.Gedcom" Version="1.0.2" />
     <PackageReference Include="LightInject" Version="6.3.2" />
     <PackageReference Include="LightInject.Microsoft.Hosting" Version="1.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.3" />

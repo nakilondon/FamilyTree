@@ -12,25 +12,14 @@ namespace ReactNet.DependencyInjection
 
             IMapper mapper = new Mapper(new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap<PersonDb, ListPerson>()
-                    .ForMember(dest => dest.Label,
-                        opt => opt.MapFrom(src => src.PreferredName + " " + src.Description));
-                cfg.CreateMap<PersonDb, FamilyTreePerson>()
-                    .ForMember(dest => dest.Label,
-                        opt => opt.MapFrom(src => src.PreferredName))
-                    .ForMember(dest => dest.Title,
-                        opt => opt.MapFrom(src => src.PreferredName))
-                    .ForMember(dest => dest.BirthDate,
-                        opt => opt.MapFrom(src => src.BirthDate.Date));
-                cfg.CreateMap<PersonDb, PersonDetails>()
-                    .ForMember(dest => dest.PreferredName,
-                        opt => opt.MapFrom(src => src.PreferredName));
-                cfg.CreateMap<PersonDetails, PersonOverride>()
-                    .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null && (string)srcMember != ""));
-                cfg.CreateMap<PersonOverride, PersonDetails>()
-                    .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null && (string)srcMember != ""));
                 cfg.CreateMap<ImageData, ImageDb>();
                 cfg.CreateMap<ImageDb, ImageData>();
+                cfg.CreateMap<PersonDb, PersonTableDb>()
+                    .ForMember(dest => dest.Gender,
+                        opt => opt.MapFrom(src => src.Gender.ToString()));
+                cfg.CreateMap<PersonTableDb, PersonDb>()
+                    .ForMember(dest => dest.Gender,
+                        opt => opt.MapFrom(src => src.Gender == "Male" ? Gender.Male : Gender.Female ));
             }));
 
             serviceRegistry.RegisterInstance(mapper);
